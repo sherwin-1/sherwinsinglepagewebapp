@@ -1,0 +1,930 @@
+// Comic Character Finder - JavaScript
+class ComicCharacterFinder {
+    constructor() {
+        // Comic Vine API configuration
+        this.BASE_URL = 'https://comicvine.gamespot.com/api';
+        this.API_KEY = 'your-api-key-here'; // You'll need to get this from Comic Vine
+        
+        // Pagination
+        this.currentPage = 1;
+        this.itemsPerPage = 20;
+        this.totalResults = 0;
+        
+        // Cache for search results
+        this.searchCache = new Map();
+        
+        this.initializeEventListeners();
+        this.showSampleData(); // Show sample data since API requires key
+    }
+    
+    initializeEventListeners() {
+        // Search functionality
+        document.getElementById('searchBtn').addEventListener('click', () => this.performSearch());
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.performSearch();
+            }
+        });
+        
+        // Filters
+        document.getElementById('publisherFilter').addEventListener('change', () => this.performSearch());
+        document.getElementById('genderFilter').addEventListener('change', () => this.performSearch());
+        
+        // Pagination
+        document.getElementById('prevBtn').addEventListener('click', () => this.previousPage());
+        document.getElementById('nextBtn').addEventListener('click', () => this.nextPage());
+        
+        // Modal
+        document.querySelector('.close').addEventListener('click', () => this.closeModal());
+        document.getElementById('characterModal').addEventListener('click', (e) => {
+            if (e.target.id === 'characterModal') {
+                this.closeModal();
+            }
+        });
+    }
+    
+    async performSearch() {
+        const query = document.getElementById('searchInput').value.trim();
+        const publisher = document.getElementById('publisherFilter').value;
+        const gender = document.getElementById('genderFilter').value;
+        
+        if (!query && !publisher && !gender) {
+            this.showError('Please enter a search term or select a filter');
+            return;
+        }
+        
+        this.showLoading(true);
+        this.hideError();
+        
+        // Create cache key
+        const cacheKey = `${query}-${publisher}-${gender}-${this.currentPage}`;
+        
+        // Check cache first
+        if (this.searchCache.has(cacheKey)) {
+            const cachedData = this.searchCache.get(cacheKey);
+            this.displayResults(cachedData.results, cachedData.totalResults);
+            this.showLoading(false);
+            return;
+        }
+        
+        try {
+            // Since Comic Vine API requires authentication, we'll use sample data
+            // In a real implementation, you would make an API call like this:
+            /*
+            const params = new URLSearchParams({
+                api_key: this.API_KEY,
+                format: 'json',
+                query: query,
+                resources: 'character',
+                limit: this.itemsPerPage,
+                offset: (this.currentPage - 1) * this.itemsPerPage
+            });
+            
+            if (publisher) params.append('filter', `publisher:${publisher}`);
+            if (gender) params.append('filter', `gender:${gender}`);
+            
+            const response = await fetch(`${this.BASE_URL}/search/?${params}`);
+            const data = await response.json();
+            */
+            
+            // For demo purposes, generate sample data
+            const sampleData = this.generateSampleData(query, publisher, gender);
+            
+            // Cache the results
+            this.searchCache.set(cacheKey, sampleData);
+            
+            this.displayResults(sampleData.results, sampleData.totalResults);
+            
+        } catch (error) {
+            console.error('Search error:', error);
+            this.showError('Failed to search characters. Please try again.');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+    
+    generateSampleData(query, publisher, gender) {
+        // Comprehensive comic character database for demonstration
+        const sampleCharacters = [
+            // DC Comics Characters
+            {
+                id: 1,
+                name: 'Batman',
+                real_name: 'Bruce Wayne',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Batman is the secret identity of Bruce Wayne, a billionaire industrialist living in Gotham City.',
+                description: 'Batman is a fictional superhero appearing in American comic books published by DC Comics. The character was created by artist Bob Kane and writer Bill Finger, and first appeared in Detective Comics #27 in 1939.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/2c3e50/ffffff?text=Batman' },
+                count_of_issue_appearances: 3847,
+                first_appeared_in_issue: { name: 'Detective Comics #27' },
+                birth: null,
+                powers: ['Peak Human Conditioning', 'Martial Arts', 'Genius Level Intellect', 'Detective Skills']
+            },
+            {
+                id: 2,
+                name: 'Superman',
+                real_name: 'Clark Kent',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Kryptonian' },
+                deck: 'Superman is the last son of Krypton, raised on Earth with incredible powers.',
+                description: 'Superman is a fictional superhero. The character was created by writer Jerry Siegel and artist Joe Shuster, and first appeared in Action Comics #1, a comic book published on April 18, 1938.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/1e88e5/ffffff?text=Superman' },
+                count_of_issue_appearances: 4521,
+                first_appeared_in_issue: { name: 'Action Comics #1' },
+                birth: null,
+                powers: ['Super Strength', 'Flight', 'Heat Vision', 'X-Ray Vision', 'Invulnerability']
+            },
+            {
+                id: 3,
+                name: 'Wonder Woman',
+                real_name: 'Diana Prince',
+                publisher: { name: 'DC Comics' },
+                gender: 'Female',
+                origin: { name: 'Amazon' },
+                deck: 'Wonder Woman is a warrior Princess of the Amazons and one of the most powerful superheroes in the DC Universe.',
+                description: 'Wonder Woman is a fictional superhero appearing in American comic books published by DC Comics. The character was created by William Moulton Marston and artist Harry G. Peter, first appearing in All Star Comics #8.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/8e44ad/ffffff?text=Wonder+Woman' },
+                count_of_issue_appearances: 2134,
+                first_appeared_in_issue: { name: 'All Star Comics #8' },
+                birth: null,
+                powers: ['Superhuman Strength', 'Flight', 'Lasso of Truth', 'Divine Powers', 'Combat Skills']
+            },
+            {
+                id: 4,
+                name: 'The Flash',
+                real_name: 'Barry Allen',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'The Flash is the fastest man alive, able to run at superhuman speeds thanks to the Speed Force.',
+                description: 'The Flash is a name shared by several fictional comic book superheroes from the DC Comics universe. Created by writer Gardner Fox and artist Harry Lampert.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/f39c12/ffffff?text=The+Flash' },
+                count_of_issue_appearances: 2687,
+                first_appeared_in_issue: { name: 'Flash Comics #1' },
+                birth: null,
+                powers: ['Super Speed', 'Speed Force', 'Time Travel', 'Dimensional Travel', 'Phasing']
+            },
+            {
+                id: 5,
+                name: 'Green Lantern',
+                real_name: 'Hal Jordan',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Green Lantern is a member of the intergalactic police force known as the Green Lantern Corps.',
+                description: 'Green Lantern is the name of several superheroes appearing in American comic books published by DC Comics. They fight evil with the aid of rings that grant them a variety of extraordinary powers.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/27ae60/ffffff?text=Green+Lantern' },
+                count_of_issue_appearances: 1876,
+                first_appeared_in_issue: { name: 'All-American Comics #16' },
+                birth: null,
+                powers: ['Power Ring', 'Energy Constructs', 'Flight', 'Force Fields', 'Space Travel']
+            },
+            {
+                id: 6,
+                name: 'Aquaman',
+                real_name: 'Arthur Curry',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Atlantean' },
+                deck: 'Aquaman is the ruler of Atlantis and defender of the seas.',
+                description: 'Aquaman is a fictional superhero appearing in American comic books published by DC Comics. Created by Paul Norris and Mort Weisinger, the character debuted in More Fun Comics #73.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/3498db/ffffff?text=Aquaman' },
+                count_of_issue_appearances: 1234,
+                first_appeared_in_issue: { name: 'More Fun Comics #73' },
+                birth: null,
+                powers: ['Underwater Breathing', 'Marine Telepathy', 'Super Strength', 'Swimming Speed', 'Trident']
+            },
+            {
+                id: 7,
+                name: 'Cyborg',
+                real_name: 'Victor Stone',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Cyborg' },
+                deck: 'Cyborg is a cybernetic superhero with advanced technological abilities.',
+                description: 'Cyborg is a fictional superhero appearing in American comic books published by DC Comics. The character was created by writer Marv Wolfman and artist George Pérez and first appears in DC Comics Presents #26.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/95a5a6/ffffff?text=Cyborg' },
+                count_of_issue_appearances: 987,
+                first_appeared_in_issue: { name: 'DC Comics Presents #26' },
+                birth: null,
+                powers: ['Cybernetic Enhancement', 'Technology Interface', 'Super Strength', 'Flight', 'Energy Weapons']
+            },
+            {
+                id: 8,
+                name: 'Green Arrow',
+                real_name: 'Oliver Queen',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Green Arrow is a master archer and defender of Star City.',
+                description: 'Green Arrow is a fictional superhero who appears in comic books published by DC Comics. Created by Mort Weisinger and designed by George Papp, he first appeared in More Fun Comics #73 in 1941.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/2ecc71/ffffff?text=Green+Arrow' },
+                count_of_issue_appearances: 1543,
+                first_appeared_in_issue: { name: 'More Fun Comics #73' },
+                birth: null,
+                powers: ['Expert Archery', 'Martial Arts', 'Acrobatics', 'Trick Arrows', 'Leadership']
+            },
+            {
+                id: 9,
+                name: 'Supergirl',
+                real_name: 'Kara Zor-El',
+                publisher: { name: 'DC Comics' },
+                gender: 'Female',
+                origin: { name: 'Kryptonian' },
+                deck: 'Supergirl is Superman\'s cousin from the planet Krypton.',
+                description: 'Supergirl is the name of several fictional superheroes appearing in American comic books published by DC Comics. The original and most well known Supergirl is Kara Zor-El, who is the cousin of the superhero Superman.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/e74c3c/ffffff?text=Supergirl' },
+                count_of_issue_appearances: 1876,
+                first_appeared_in_issue: { name: 'Action Comics #252' },
+                birth: null,
+                powers: ['Super Strength', 'Flight', 'Heat Vision', 'X-Ray Vision', 'Invulnerability']
+            },
+            {
+                id: 10,
+                name: 'Batgirl',
+                real_name: 'Barbara Gordon',
+                publisher: { name: 'DC Comics' },
+                gender: 'Female',
+                origin: { name: 'Human' },
+                deck: 'Batgirl is a skilled crimefighter and ally of Batman.',
+                description: 'Batgirl is the name of several fictional superheroes appearing in American comic books published by DC Comics, depicted as female counterparts to the superhero Batman.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/663399/ffffff?text=Batgirl' },
+                count_of_issue_appearances: 1432,
+                first_appeared_in_issue: { name: 'Detective Comics #359' },
+                birth: null,
+                powers: ['Martial Arts', 'Acrobatics', 'Computer Skills', 'Detective Skills', 'Photographic Memory']
+            },
+
+            // Marvel Comics Characters
+            {
+                id: 11,
+                name: 'Spider-Man',
+                real_name: 'Peter Parker',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Spider-Man is the alter ego of Peter Parker, a photographer for the Daily Bugle.',
+                description: 'Spider-Man is a fictional superhero created by writer-editor Stan Lee and writer-artist Steve Ditko. He first appeared in the anthology comic book Amazing Fantasy #15 in 1962.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/c0392b/ffffff?text=Spider-Man' },
+                count_of_issue_appearances: 2956,
+                first_appeared_in_issue: { name: 'Amazing Fantasy #15' },
+                birth: null,
+                powers: ['Wall-Crawling', 'Spider-Sense', 'Superhuman Strength', 'Web-Slinging', 'Agility']
+            },
+            {
+                id: 12,
+                name: 'Iron Man',
+                real_name: 'Tony Stark',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Iron Man is the armored alter ego of Anthony Edward "Tony" Stark, a billionaire industrialist and genius inventor.',
+                description: 'Iron Man is a fictional superhero appearing in American comic books published by Marvel Comics. The character was co-created by writer and editor Stan Lee, developed by scripter Larry Lieber.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/e74c3c/ffffff?text=Iron+Man' },
+                count_of_issue_appearances: 1876,
+                first_appeared_in_issue: { name: 'Tales of Suspense #39' },
+                birth: null,
+                powers: ['Powered Armor', 'Genius Intellect', 'Wealth', 'Technology', 'Flight']
+            },
+            {
+                id: 13,
+                name: 'Captain America',
+                real_name: 'Steve Rogers',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Captain America is a super-soldier from World War II who fights for freedom and justice.',
+                description: 'Captain America is a fictional character appearing in American comic books published by Marvel Comics. Created by cartoonists Joe Simon and Jack Kirby, the character first appeared in Captain America Comics #1.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/1e3a8a/ffffff?text=Captain+America' },
+                count_of_issue_appearances: 3254,
+                first_appeared_in_issue: { name: 'Captain America Comics #1' },
+                birth: null,
+                powers: ['Enhanced Physical Abilities', 'Shield Combat', 'Leadership', 'Tactical Genius', 'Combat Skills']
+            },
+            {
+                id: 14,
+                name: 'Thor',
+                real_name: 'Thor Odinson',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Asgardian' },
+                deck: 'Thor is the Asgardian God of Thunder and a founding member of the Avengers.',
+                description: 'Thor is a fictional superhero appearing in American comic books published by Marvel Comics. The character is based on the Norse deity of the same name, the Asgardian god of thunder.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/f39c12/ffffff?text=Thor' },
+                count_of_issue_appearances: 2187,
+                first_appeared_in_issue: { name: 'Journey into Mystery #83' },
+                birth: null,
+                powers: ['God-like Strength', 'Mjolnir', 'Weather Control', 'Flight', 'Lightning Control']
+            },
+            {
+                id: 15,
+                name: 'Hulk',
+                real_name: 'Bruce Banner',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'The Hulk is the alter ego of Dr. Bruce Banner, triggered by anger and stress.',
+                description: 'The Hulk is a fictional superhero appearing in publications by the American publisher Marvel Comics. Created by writer Stan Lee and artist Jack Kirby, the character first appeared in The Incredible Hulk #1.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/27ae60/ffffff?text=Hulk' },
+                count_of_issue_appearances: 2543,
+                first_appeared_in_issue: { name: 'The Incredible Hulk #1' },
+                birth: null,
+                powers: ['Limitless Strength', 'Invulnerability', 'Regeneration', 'Leaping', 'Gamma Radiation']
+            },
+            {
+                id: 16,
+                name: 'Black Widow',
+                real_name: 'Natasha Romanoff',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Female',
+                origin: { name: 'Human' },
+                deck: 'Black Widow is a former Russian spy turned superhero and member of the Avengers.',
+                description: 'Black Widow is a fictional superhero appearing in American comic books published by Marvel Comics. Created by editor and plotter Stan Lee, scripter Don Rico, and artist Don Heck.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/34495e/ffffff?text=Black+Widow' },
+                count_of_issue_appearances: 1432,
+                first_appeared_in_issue: { name: 'Tales of Suspense #52' },
+                birth: null,
+                powers: ['Expert Spy', 'Martial Arts', 'Weapons Expert', 'Enhanced Conditioning', 'Acrobatics']
+            },
+            {
+                id: 17,
+                name: 'Hawkeye',
+                real_name: 'Clint Barton',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Hawkeye is a master archer and marksman, member of the Avengers.',
+                description: 'Hawkeye is a fictional superhero appearing in American comic books published by Marvel Comics. Created by writer Stan Lee and artist Don Heck, the character first appeared in Tales of Suspense #57.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/663399/ffffff?text=Hawkeye' },
+                count_of_issue_appearances: 1876,
+                first_appeared_in_issue: { name: 'Tales of Suspense #57' },
+                birth: null,
+                powers: ['Expert Archery', 'Martial Arts', 'Acrobatics', 'Trick Arrows', 'Leadership']
+            },
+            {
+                id: 18,
+                name: 'Ant-Man',
+                real_name: 'Scott Lang',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Ant-Man can shrink to the size of an ant while retaining human strength.',
+                description: 'Ant-Man is the name of several superheroes appearing in books published by Marvel Comics. Created by Stan Lee, Larry Lieber and Jack Kirby, Ant-Man\'s first appearance was in Tales to Astonish #35.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/e67e22/ffffff?text=Ant-Man' },
+                count_of_issue_appearances: 987,
+                first_appeared_in_issue: { name: 'Tales to Astonish #35' },
+                birth: null,
+                powers: ['Size Manipulation', 'Insect Communication', 'Enhanced Strength', 'Flight', 'Technology']
+            },
+            {
+                id: 19,
+                name: 'Wasp',
+                real_name: 'Janet van Dyne',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Female',
+                origin: { name: 'Human' },
+                deck: 'The Wasp can shrink to insect size and has bio-electric energy blasts.',
+                description: 'The Wasp is a fictional superhero appearing in American comic books published by Marvel Comics. Created by Stan Lee, Ernie Hart, and Jack Kirby, the character first appeared in Tales to Astonish #44.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/f1c40f/ffffff?text=Wasp' },
+                count_of_issue_appearances: 1234,
+                first_appeared_in_issue: { name: 'Tales to Astonish #44' },
+                birth: null,
+                powers: ['Size Manipulation', 'Flight', 'Bio-Electric Blasts', 'Insect Communication', 'Leadership']
+            },
+            {
+                id: 20,
+                name: 'Doctor Strange',
+                real_name: 'Stephen Strange',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Doctor Strange is the Sorcerer Supreme, master of the mystic arts.',
+                description: 'Doctor Strange is a fictional superhero appearing in American comic books published by Marvel Comics. Created by artist Steve Ditko and writer Stan Lee, the character first appeared in Strange Tales #110.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/8e44ad/ffffff?text=Doctor+Strange' },
+                count_of_issue_appearances: 1654,
+                first_appeared_in_issue: { name: 'Strange Tales #110' },
+                birth: null,
+                powers: ['Magic', 'Astral Projection', 'Time Manipulation', 'Dimensional Travel', 'Teleportation']
+            },
+            {
+                id: 21,
+                name: 'Scarlet Witch',
+                real_name: 'Wanda Maximoff',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Female',
+                origin: { name: 'Mutant' },
+                deck: 'Scarlet Witch possesses powerful reality-altering magic abilities.',
+                description: 'Scarlet Witch is a fictional superhero appearing in American comic books published by Marvel Comics. The character was created by writer Stan Lee and artist Jack Kirby, first appearing in The X-Men #4.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/e74c3c/ffffff?text=Scarlet+Witch' },
+                count_of_issue_appearances: 1876,
+                first_appeared_in_issue: { name: 'The X-Men #4' },
+                birth: null,
+                powers: ['Reality Manipulation', 'Chaos Magic', 'Telekinesis', 'Energy Blasts', 'Flight']
+            },
+            {
+                id: 22,
+                name: 'Vision',
+                real_name: 'Vision',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Android' },
+                deck: 'Vision is an android superhero with the ability to alter his density.',
+                description: 'Vision is a fictional superhero appearing in American comic books published by Marvel Comics. He is an android created by the villainous robot Ultron, and is frequently depicted as a member of the Avengers.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/e67e22/ffffff?text=Vision' },
+                count_of_issue_appearances: 1432,
+                first_appeared_in_issue: { name: 'The Avengers #57' },
+                birth: null,
+                powers: ['Density Control', 'Phasing', 'Flight', 'Super Strength', 'Solar Energy Beams']
+            },
+            {
+                id: 23,
+                name: 'Wolverine',
+                real_name: 'Logan',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Mutant' },
+                deck: 'Wolverine is a mutant with retractable claws, enhanced senses, and healing factor.',
+                description: 'Wolverine is a fictional character appearing in American comic books published by Marvel Comics, mostly in association with the X-Men. He is a mutant who possesses animal-keen senses, enhanced physical capabilities, a powerful regenerative ability known as a healing factor, and three retractable claws in each hand.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/f39c12/ffffff?text=Wolverine' },
+                count_of_issue_appearances: 3421,
+                first_appeared_in_issue: { name: 'The Incredible Hulk #180' },
+                birth: null,
+                powers: ['Healing Factor', 'Adamantium Claws', 'Enhanced Senses', 'Combat Skills', 'Berserker Rage']
+            },
+            {
+                id: 24,
+                name: 'Storm',
+                real_name: 'Ororo Munroe',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Female',
+                origin: { name: 'Mutant' },
+                deck: 'Storm is a mutant with the ability to control weather patterns.',
+                description: 'Storm is a fictional superhero appearing in American comic books published by Marvel Comics. The character was first appeared in Giant-Size X-Men #1, created by writer Len Wein and artist Dave Cockrum.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/3498db/ffffff?text=Storm' },
+                count_of_issue_appearances: 2134,
+                first_appeared_in_issue: { name: 'Giant-Size X-Men #1' },
+                birth: null,
+                powers: ['Weather Control', 'Flight', 'Lightning Control', 'Wind Manipulation', 'Leadership']
+            },
+            {
+                id: 25,
+                name: 'Cyclops',
+                real_name: 'Scott Summers',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Mutant' },
+                deck: 'Cyclops is a mutant with the ability to emit powerful energy beams from his eyes.',
+                description: 'Cyclops is a fictional superhero appearing in American comic books published by Marvel Comics and is a founding member of the X-Men. Created by writer Stan Lee and artist Jack Kirby, the character first appeared in The X-Men #1.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/c0392b/ffffff?text=Cyclops' },
+                count_of_issue_appearances: 2876,
+                first_appeared_in_issue: { name: 'The X-Men #1' },
+                birth: null,
+                powers: ['Optic Blasts', 'Energy Absorption', 'Leadership', 'Tactical Genius', 'Combat Skills']
+            },
+            {
+                id: 26,
+                name: 'Jean Grey',
+                real_name: 'Jean Grey',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Female',
+                origin: { name: 'Mutant' },
+                deck: 'Jean Grey is a powerful telepath and telekinetic, host to the Phoenix Force.',
+                description: 'Jean Grey is a fictional superhero appearing in American comic books published by Marvel Comics. The character has been known under the aliases Marvel Girl, Phoenix, and Dark Phoenix.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/e74c3c/ffffff?text=Jean+Grey' },
+                count_of_issue_appearances: 2143,
+                first_appeared_in_issue: { name: 'The X-Men #1' },
+                birth: null,
+                powers: ['Telepathy', 'Telekinesis', 'Phoenix Force', 'Psychic Powers', 'Energy Manipulation']
+            },
+            {
+                id: 27,
+                name: 'Nightcrawler',
+                real_name: 'Kurt Wagner',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Mutant' },
+                deck: 'Nightcrawler is a mutant with the ability to teleport and a demonic appearance.',
+                description: 'Nightcrawler is a fictional superhero appearing in American comic books published by Marvel Comics, commonly in association with the X-Men. Created by writer Len Wein and artist Dave Cockrum.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/663399/ffffff?text=Nightcrawler' },
+                count_of_issue_appearances: 1876,
+                first_appeared_in_issue: { name: 'Giant-Size X-Men #1' },
+                birth: null,
+                powers: ['Teleportation', 'Acrobatics', 'Wall-Crawling', 'Stealth', 'Swordsmanship']
+            },
+            {
+                id: 28,
+                name: 'Rogue',
+                real_name: 'Anna Marie',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Female',
+                origin: { name: 'Mutant' },
+                deck: 'Rogue can absorb the powers, memories, and life force of others through touch.',
+                description: 'Rogue is a fictional superhero appearing in American comic books published by Marvel Comics, commonly in association with the X-Men. Created by writer Chris Claremont and artist Michael Golden.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/27ae60/ffffff?text=Rogue' },
+                count_of_issue_appearances: 1654,
+                first_appeared_in_issue: { name: 'Avengers Annual #10' },
+                birth: null,
+                powers: ['Power Absorption', 'Super Strength', 'Flight', 'Invulnerability', 'Energy Absorption']
+            },
+            {
+                id: 29,
+                name: 'Gambit',
+                real_name: 'Remy LeBeau',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Mutant' },
+                deck: 'Gambit can charge objects with kinetic energy, making them explosive.',
+                description: 'Gambit is a fictional superhero appearing in American comic books published by Marvel Comics, commonly in association with the X-Men. Created by writer Chris Claremont and artist Jim Lee.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/8e44ad/ffffff?text=Gambit' },
+                count_of_issue_appearances: 1432,
+                first_appeared_in_issue: { name: 'Uncanny X-Men Annual #14' },
+                birth: null,
+                powers: ['Kinetic Energy Manipulation', 'Enhanced Agility', 'Hypnotic Charm', 'Staff Combat', 'Card Throwing']
+            },
+            {
+                id: 30,
+                name: 'Deadpool',
+                real_name: 'Wade Wilson',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Deadpool is a mercenary with accelerated healing and a tendency to break the fourth wall.',
+                description: 'Deadpool is a fictional character appearing in American comic books published by Marvel Comics. Created by writer Fabian Nicieza and artist Rob Liefeld, the character first appeared in The New Mutants #98.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/c0392b/ffffff?text=Deadpool' },
+                count_of_issue_appearances: 1876,
+                first_appeared_in_issue: { name: 'The New Mutants #98' },
+                birth: null,
+                powers: ['Healing Factor', 'Martial Arts', 'Weapons Expert', 'Fourth Wall Awareness', 'Regeneration']
+            },
+
+            // Additional Marvel Characters
+            {
+                id: 31,
+                name: 'Captain Marvel',
+                real_name: 'Carol Danvers',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Female',
+                origin: { name: 'Human' },
+                deck: 'Captain Marvel possesses incredible cosmic powers and can fly at light speed.',
+                description: 'Captain Marvel is a fictional superhero appearing in American comic books published by Marvel Comics. Created by writer Roy Thomas and artist Gene Colan, the character first appeared in Marvel Super-Heroes #13.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/f39c12/ffffff?text=Captain+Marvel' },
+                count_of_issue_appearances: 1543,
+                first_appeared_in_issue: { name: 'Marvel Super-Heroes #13' },
+                birth: null,
+                powers: ['Cosmic Powers', 'Super Strength', 'Flight', 'Energy Absorption', 'Photon Blasts']
+            },
+            {
+                id: 32,
+                name: 'Daredevil',
+                real_name: 'Matt Murdock',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Daredevil is a blind lawyer with enhanced senses who fights crime in Hell\'s Kitchen.',
+                description: 'Daredevil is a fictional superhero appearing in American comic books published by Marvel Comics. Created by writer-editor Stan Lee and artist Bill Everett, with an unspecified amount of input from Jack Kirby.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/c0392b/ffffff?text=Daredevil' },
+                count_of_issue_appearances: 2134,
+                first_appeared_in_issue: { name: 'Daredevil #1' },
+                birth: null,
+                powers: ['Enhanced Senses', 'Radar Sense', 'Martial Arts', 'Acrobatics', 'Legal Knowledge']
+            },
+            {
+                id: 33,
+                name: 'Punisher',
+                real_name: 'Frank Castle',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'The Punisher is a vigilante who uses lethal methods to fight crime.',
+                description: 'The Punisher is a fictional character appearing in American comic books published by Marvel Comics. The character was created by writer Gerry Conway and artists John Romita Sr. and Ross Andru.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/2c3e50/ffffff?text=Punisher' },
+                count_of_issue_appearances: 1876,
+                first_appeared_in_issue: { name: 'The Amazing Spider-Man #129' },
+                birth: null,
+                powers: ['Military Training', 'Weapons Expert', 'Tactical Genius', 'Combat Skills', 'Pain Resistance']
+            },
+            {
+                id: 34,
+                name: 'Ghost Rider',
+                real_name: 'Johnny Blaze',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Supernatural' },
+                deck: 'Ghost Rider is a supernatural entity with a flaming skull who punishes the guilty.',
+                description: 'Ghost Rider is the name of multiple fictional supernatural antiheroes appearing in comic books published by Marvel Comics. Marvel had previously used the name for a Western character whose name was later changed to Phantom Rider.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/e67e22/ffffff?text=Ghost+Rider' },
+                count_of_issue_appearances: 1432,
+                first_appeared_in_issue: { name: 'Marvel Spotlight #5' },
+                birth: null,
+                powers: ['Hellfire Control', 'Penance Stare', 'Supernatural Strength', 'Immortality', 'Chain Combat']
+            },
+            {
+                id: 35,
+                name: 'Silver Surfer',
+                real_name: 'Norrin Radd',
+                publisher: { name: 'Marvel Comics' },
+                gender: 'Male',
+                origin: { name: 'Alien' },
+                deck: 'Silver Surfer wields the Power Cosmic and travels the universe on his surfboard.',
+                description: 'The Silver Surfer is a fictional superhero appearing in American comic books published by Marvel Comics. The character also appears in a number of movies, television, and video game adaptations.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/95a5a6/ffffff?text=Silver+Surfer' },
+                count_of_issue_appearances: 1654,
+                first_appeared_in_issue: { name: 'Fantastic Four #48' },
+                birth: null,
+                powers: ['Power Cosmic', 'Space Travel', 'Energy Manipulation', 'Matter Manipulation', 'Cosmic Awareness']
+            },
+
+            // Additional DC Characters
+            {
+                id: 36,
+                name: 'Shazam',
+                real_name: 'Billy Batson',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'Shazam is a young boy who can transform into a powerful superhero by saying "Shazam!"',
+                description: 'Shazam is a fictional superhero appearing in American comic books published by DC Comics. Artist C. C. Beck and writer Bill Parker created the character in 1940.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/f1c40f/ffffff?text=Shazam' },
+                count_of_issue_appearances: 1234,
+                first_appeared_in_issue: { name: 'Whiz Comics #2' },
+                birth: null,
+                powers: ['Divine Powers', 'Super Strength', 'Flight', 'Magic Lightning', 'Wisdom of Solomon']
+            },
+            {
+                id: 37,
+                name: 'Martian Manhunter',
+                real_name: 'J\'onn J\'onzz',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Martian' },
+                deck: 'Martian Manhunter is the last surviving Green Martian with incredible powers.',
+                description: 'The Martian Manhunter is a fictional superhero appearing in American comic books published by DC Comics. Created by writer Joseph Samachson and artist Joe Certa, the character first appeared in The Brave and the Bold #28.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/27ae60/ffffff?text=Martian+Manhunter' },
+                count_of_issue_appearances: 1543,
+                first_appeared_in_issue: { name: 'The Brave and the Bold #28' },
+                birth: null,
+                powers: ['Shape-shifting', 'Telepathy', 'Super Strength', 'Flight', 'Invisibility']
+            },
+            {
+                id: 38,
+                name: 'Zatanna',
+                real_name: 'Zatanna Zatara',
+                publisher: { name: 'DC Comics' },
+                gender: 'Female',
+                origin: { name: 'Human' },
+                deck: 'Zatanna is a powerful magician who casts spells by speaking backwards.',
+                description: 'Zatanna is a fictional superheroine appearing in American comic books published by DC Comics. The character was created by writer Gardner Fox and artist Murphy Anderson, and first appeared in Hawkman #4.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/663399/ffffff?text=Zatanna' },
+                count_of_issue_appearances: 987,
+                first_appeared_in_issue: { name: 'Hawkman #4' },
+                birth: null,
+                powers: ['Magic', 'Spell Casting', 'Illusions', 'Teleportation', 'Reality Manipulation']
+            },
+            {
+                id: 39,
+                name: 'Constantine',
+                real_name: 'John Constantine',
+                publisher: { name: 'DC Comics' },
+                gender: 'Male',
+                origin: { name: 'Human' },
+                deck: 'John Constantine is a cynical occult detective and master of the dark arts.',
+                description: 'John Constantine is a fictional character appearing in American comic books published by DC Comics and its alternative imprint Vertigo. The character was created by Alan Moore, Steve Bissette, and John Totleben.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/f39c12/ffffff?text=Constantine' },
+                count_of_issue_appearances: 1432,
+                first_appeared_in_issue: { name: 'The Saga of Swamp Thing #37' },
+                birth: null,
+                powers: ['Occult Knowledge', 'Magic', 'Demon Summoning', 'Protection Spells', 'Cunning']
+            },
+            {
+                id: 40,
+                name: 'Harley Quinn',
+                real_name: 'Harleen Quinzel',
+                publisher: { name: 'DC Comics' },
+                gender: 'Female',
+                origin: { name: 'Human' },
+                deck: 'Harley Quinn is a former psychiatrist turned chaotic anti-hero and occasional villain.',
+                description: 'Harley Quinn is a fictional character appearing in American comic books published by DC Comics. The character was created by Paul Dini and Bruce Timm, and first appeared in Batman: The Animated Series.',
+                image: { medium_url: 'https://via.placeholder.com/200x250/e74c3c/ffffff?text=Harley+Quinn' },
+                count_of_issue_appearances: 1234,
+                first_appeared_in_issue: { name: 'Batman Adventures #12' },
+                birth: null,
+                powers: ['Acrobatics', 'Combat Skills', 'Psychology', 'Unpredictability', 'Baseball Bat Combat']
+            }
+        ];
+        
+        // Filter based on search criteria
+        let filteredCharacters = sampleCharacters;
+        
+        if (query) {
+            filteredCharacters = filteredCharacters.filter(char => 
+                char.name.toLowerCase().includes(query.toLowerCase()) ||
+                char.real_name.toLowerCase().includes(query.toLowerCase())
+            );
+        }
+        
+        if (publisher) {
+            filteredCharacters = filteredCharacters.filter(char => 
+                char.publisher.name === publisher
+            );
+        }
+        
+        if (gender) {
+            filteredCharacters = filteredCharacters.filter(char => 
+                char.gender === gender
+            );
+        }
+        
+        // Simulate pagination
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const paginatedResults = filteredCharacters.slice(startIndex, endIndex);
+        
+        return {
+            results: paginatedResults,
+            totalResults: filteredCharacters.length
+        };
+    }
+    
+    displayResults(characters, totalResults) {
+        this.totalResults = totalResults;
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const resultsTitle = document.getElementById('resultsTitle');
+        
+        if (characters.length === 0) {
+            resultsTitle.textContent = 'No characters found';
+            resultsGrid.innerHTML = '<p class="no-results">Try adjusting your search terms or filters.</p>';
+        } else {
+            resultsTitle.textContent = `Found ${totalResults} character${totalResults !== 1 ? 's' : ''}`;
+            resultsGrid.innerHTML = characters.map(character => this.createCharacterCard(character)).join('');
+        }
+        
+        this.updatePagination();
+        resultsSection.classList.remove('hidden');
+    }
+    
+    createCharacterCard(character) {
+        const imageUrl = character.image?.medium_url || 'https://via.placeholder.com/200x250/95a5a6/ffffff?text=No+Image';
+        const publisherName = character.publisher?.name || 'Unknown Publisher';
+        const description = character.deck || character.description || 'No description available.';
+        const truncatedDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
+        
+        return `
+            <div class="character-card" onclick="comicFinder.showCharacterDetails(${character.id})">
+                <img src="${imageUrl}" alt="${character.name}" class="character-image" 
+                     onerror="this.src='https://via.placeholder.com/200x250/95a5a6/ffffff?text=No+Image'">
+                <div class="character-name">${character.name}</div>
+                <div class="character-publisher">${publisherName}</div>
+                <div class="character-description">${truncatedDescription}</div>
+                <div class="character-stats">
+                    <span>Issues: ${character.count_of_issue_appearances || 0}</span>
+                    <span>${character.gender || 'Unknown'}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    showCharacterDetails(characterId) {
+        // Find character in current search results or cache
+        let character = null;
+        
+        // Search through cache to find character
+        for (let [key, data] of this.searchCache.entries()) {
+            character = data.results.find(char => char.id === characterId);
+            if (character) break;
+        }
+        
+        if (!character) {
+            // Generate sample character for demo
+            character = this.generateSampleData('', '', '').results.find(char => char.id === characterId);
+        }
+        
+        if (!character) {
+            this.showError('Character details not found');
+            return;
+        }
+        
+        const modal = document.getElementById('characterModal');
+        const detailsContainer = document.getElementById('characterDetails');
+        
+        const imageUrl = character.image?.medium_url || 'https://via.placeholder.com/200x250/95a5a6/ffffff?text=No+Image';
+        const realName = character.real_name || 'Unknown';
+        const publisherName = character.publisher?.name || 'Unknown Publisher';
+        const origin = character.origin?.name || 'Unknown';
+        const firstAppearance = character.first_appeared_in_issue?.name || 'Unknown';
+        const description = character.description || character.deck || 'No description available.';
+        const powers = character.powers || [];
+        
+        detailsContainer.innerHTML = `
+            <div class="character-detail">
+                <img src="${imageUrl}" alt="${character.name}" class="character-detail-image"
+                     onerror="this.src='https://via.placeholder.com/200x250/95a5a6/ffffff?text=No+Image'">
+                <h2 class="character-detail-name">${character.name}</h2>
+                <p class="character-detail-real-name">${realName}</p>
+                
+                <div class="character-detail-info">
+                    <div class="info-item">
+                        <div class="info-label">Publisher</div>
+                        <div class="info-value">${publisherName}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Gender</div>
+                        <div class="info-value">${character.gender || 'Unknown'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Origin</div>
+                        <div class="info-value">${origin}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">First Appearance</div>
+                        <div class="info-value">${firstAppearance}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Issue Appearances</div>
+                        <div class="info-value">${character.count_of_issue_appearances || 0}</div>
+                    </div>
+                    ${powers.length > 0 ? `
+                    <div class="info-item">
+                        <div class="info-label">Powers</div>
+                        <div class="info-value">${powers.join(', ')}</div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="character-detail-description">
+                    <h3>Description</h3>
+                    <p>${description}</p>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+    }
+    
+    closeModal() {
+        document.getElementById('characterModal').classList.add('hidden');
+    }
+    
+    updatePagination() {
+        const totalPages = Math.ceil(this.totalResults / this.itemsPerPage);
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageInfo = document.getElementById('pageInfo');
+        
+        prevBtn.disabled = this.currentPage <= 1;
+        nextBtn.disabled = this.currentPage >= totalPages || totalPages === 0;
+        pageInfo.textContent = totalPages > 0 ? `Page ${this.currentPage} of ${totalPages}` : 'Page 0 of 0';
+    }
+    
+    previousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.performSearch();
+        }
+    }
+    
+    nextPage() {
+        const totalPages = Math.ceil(this.totalResults / this.itemsPerPage);
+        if (this.currentPage < totalPages) {
+            this.currentPage++;
+            this.performSearch();
+        }
+    }
+    
+    showLoading(show) {
+        const loading = document.getElementById('loading');
+        if (show) {
+            loading.classList.remove('hidden');
+        } else {
+            loading.classList.add('hidden');
+        }
+    }
+    
+    showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.querySelector('p').textContent = message;
+        errorDiv.classList.remove('hidden');
+        setTimeout(() => {
+            errorDiv.classList.add('hidden');
+        }, 5000);
+    }
+    
+    hideError() {
+        document.getElementById('errorMessage').classList.add('hidden');
+    }
+    
+    showSampleData() {
+        // Show some sample characters on page load
+        const sampleData = this.generateSampleData('', '', '');
+        this.displayResults(sampleData.results.slice(0, 6), sampleData.results.length);
+    }
+}
+
+// Initialize the app when DOM is loaded
+let comicFinder;
+document.addEventListener('DOMContentLoaded', () => {
+    comicFinder = new ComicCharacterFinder();
+});

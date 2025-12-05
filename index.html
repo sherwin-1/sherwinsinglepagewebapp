@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Weather Widget</title>
+        <script src="script.js"></script>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="card" id="card">
+            <select onchange="changeLocation()" id="location">
+                <option value="hongkong">Hong Kong</option>
+                <option value="london">London</option>
+                <option value="newyork">New York City</option>
+                <option value="tokyo">Tokyo</option>
+            </select>
+            <div class="grid">
+                <div class="weather-icon">
+                    <img id="weather-icon">
+                </div>
+                <div class="current-temperature">
+                    <p>Temperature</p>
+                    <h2 id="current-temperature"></h2>
+                </div>
+                <div class="chance-of-rain">
+                    <p>Chance of Rain</p>
+                    <h2 id="chance-of-rain"></h2>
+                </div>
+                <div class="humidity">
+                    <p>Humidity</p>
+                    <h2 id="humidity"></h2>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
